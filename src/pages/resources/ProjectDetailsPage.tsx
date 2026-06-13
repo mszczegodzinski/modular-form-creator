@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type SubmitEventHandler } from 'react'
+import { useState, type ChangeEvent, type SubmitEventHandler } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   useResourceQuery,
@@ -46,21 +46,12 @@ export function ProjectDetailsPage() {
   const {
     clearProjectDetailsDraft,
     getProjectDetailsDraft,
-    initializeProjectDetailsDraft,
     syncProjectDetailsDraft,
     updateProjectDetailsField,
     updateProjectDetailsOptions,
   } = useResourceWorkspace()
   const draft = resourceId ? getProjectDetailsDraft(resourceId) : undefined
   const [fieldErrors, setFieldErrors] = useState<ProjectDetailsFieldErrors>({})
-
-  useEffect(() => {
-    if (!resourceId || !resourceQuery.data) {
-      return
-    }
-
-    initializeProjectDetailsDraft(resourceId, resourceQuery.data)
-  }, [initializeProjectDetailsDraft, resourceId, resourceQuery.data])
 
   const handleSave: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault()

@@ -65,3 +65,7 @@ export function createEmptyProjectDetailsDraft(): ProjectDetails {
     options: [],
   }
 }
+
+export function toWorkspaceResourceId(resourceId: string | number): string {
+  return String(resourceId)
+}
