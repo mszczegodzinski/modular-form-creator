@@ -1,11 +1,8 @@
-import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useResourceQuery } from '../../api'
 import { Badge, Card } from '../../design-system'
 import { paths } from '../../routes/paths'
-import { hasBufferedResourceEdits } from './completedResourceSubmit'
 import {
-  canAccessProjectDetails,
   isBasicInfoComplete,
   isProjectDetailsComplete,
 } from './resourceModuleStatus'
@@ -28,7 +25,7 @@ import {
   Title,
   TitleRow,
 } from './ResourceDetailsPage.styles'
-import { useResourceWorkspace } from './useResourceWorkspace'
+import { useResourceSummaryView } from './useResourceSummaryView'
 import { CATEGORY_OPTIONS, PRIORITY_OPTIONS } from './resourceWorkspace.utils'
 
 function formatText(value: string): string {
@@ -61,25 +58,11 @@ export function ResourceDetailsPage() {
   const { resourceId } = useParams<{ resourceId: string }>()
   const resourceQuery = useResourceQuery(resourceId)
   const {
-    getBasicInfoDraft,
-    getProjectDetailsDraft,
-    initializeBasicInfoDraft,
-    initializeProjectDetailsDraft,
-  } = useResourceWorkspace()
-
-  useEffect(() => {
-    if (!resourceId || !resourceQuery.data) {
-      return
-    }
-
-    initializeBasicInfoDraft(resourceId, resourceQuery.data)
-    initializeProjectDetailsDraft(resourceId, resourceQuery.data)
-  }, [
-    initializeBasicInfoDraft,
-    initializeProjectDetailsDraft,
-    resourceId,
-    resourceQuery.data,
-  ])
+    isReady: summaryReady,
+    displayedBasicInfo,
+    displayedProjectDetails,
+    hasPendingEdits,
+  } = useResourceSummaryView(resourceQuery.data)
 
   if (!resourceId) {
     return (
@@ -114,15 +97,21 @@ export function ResourceDetailsPage() {
   }
 
   const resource = resourceQuery.data
-  const { basicInfo, projectDetails } = resource
-  const basicInfoComplete = isBasicInfoComplete(basicInfo)
-  const projectDetailsAccessible = canAccessProjectDetails(resource)
-  const projectDetailsComplete = isProjectDetailsComplete(projectDetails)
-  const hasPendingEdits = hasBufferedResourceEdits(
-    resource,
-    getBasicInfoDraft(resourceId),
-    getProjectDetailsDraft(resourceId),
-  )
+
+  if (!summaryReady || !displayedBasicInfo || !displayedProjectDetails) {
+    return (
+      <Page>
+        <StatusText>Preparing resource summary…</StatusText>
+      </Page>
+    )
+  }
+
+  const basicInfoComplete = isBasicInfoComplete(displayedBasicInfo)
+  const projectDetailsComplete = isProjectDetailsComplete(displayedProjectDetails)
+  const projectDetailsAccessible =
+    resource.status === 'completed'
+      ? true
+      : isBasicInfoComplete(displayedBasicInfo)
 
   return (
     <Page>
@@ -134,15 +123,19 @@ export function ResourceDetailsPage() {
             {resource.status}
           </Badge>
         </TitleRow>
-        <Subtitle>Saved data for {resource.name}</Subtitle>
+        <Subtitle>
+          {hasPendingEdits
+            ? `Current edits for ${resource.name}`
+            : `Saved data for ${resource.name}`}
+        </Subtitle>
       </Header>
 
       {hasPendingEdits && (
         <PendingHint role="status" aria-live="polite">
-          Module forms contain unsaved changes that are not reflected below.
+          Showing your current module edits. These changes are not saved on the server yet.
           {resource.status === 'completed'
-            ? ' Submit changes from the overview page to update this summary.'
-            : ' Save each module to update this summary.'}
+            ? ' Submit changes from the overview page to persist them.'
+            : ' Save each module to persist them.'}
         </PendingHint>
       )}
 
@@ -157,14 +150,17 @@ export function ResourceDetailsPage() {
         <FieldList>
           <SummaryField
             label="Resource name"
-            value={formatText(basicInfo.resourceName)}
+            value={formatText(displayedBasicInfo.resourceName)}
           />
-          <SummaryField label="Owner" value={formatText(basicInfo.owner)} />
-          <SummaryField label="Email" value={formatText(basicInfo.email)} />
-          <SummaryField label="Description" value={formatText(basicInfo.description)} />
+          <SummaryField label="Owner" value={formatText(displayedBasicInfo.owner)} />
+          <SummaryField label="Email" value={formatText(displayedBasicInfo.email)} />
+          <SummaryField
+            label="Description"
+            value={formatText(displayedBasicInfo.description)}
+          />
           <SummaryField
             label="Priority"
-            value={formatSelectValue(basicInfo.priority, PRIORITY_OPTIONS)}
+            value={formatSelectValue(displayedBasicInfo.priority, PRIORITY_OPTIONS)}
           />
         </FieldList>
 
@@ -200,18 +196,21 @@ export function ResourceDetailsPage() {
             <FieldList>
               <SummaryField
                 label="Project name"
-                value={formatText(projectDetails.projectName)}
+                value={formatText(displayedProjectDetails.projectName)}
               />
-              <SummaryField label="Budget" value={formatText(projectDetails.budget)} />
+              <SummaryField
+                label="Budget"
+                value={formatText(displayedProjectDetails.budget)}
+              />
               <SummaryField
                 label="Category"
-                value={formatSelectValue(projectDetails.category, CATEGORY_OPTIONS)}
+                value={formatSelectValue(displayedProjectDetails.category, CATEGORY_OPTIONS)}
               />
               <FieldLabel>Team members needed</FieldLabel>
               <FieldValue>
-                {projectDetails.options.length > 0 ? (
+                {displayedProjectDetails.options.length > 0 ? (
                   <OptionsList>
-                    {projectDetails.options.map((option) => (
+                    {displayedProjectDetails.options.map((option) => (
                       <li key={option}>{option}</li>
                     ))}
                   </OptionsList>

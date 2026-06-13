@@ -6,6 +6,7 @@ import {
   createEmptyBasicInfoDraft,
   createEmptyProjectDetailsDraft,
   createProjectDetailsDraftFromResource,
+  toWorkspaceResourceId,
 } from './resourceWorkspace.utils'
 
 export function ResourceWorkspaceProvider({ children }: { children: ReactNode }) {
@@ -17,20 +18,22 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
   >({})
 
   const getBasicInfoDraft = useCallback(
-    (resourceId: string) => basicInfoDrafts[resourceId],
+    (resourceId: string | number) => basicInfoDrafts[toWorkspaceResourceId(resourceId)],
     [basicInfoDrafts],
   )
 
   const initializeBasicInfoDraft = useCallback(
-    (resourceId: string, resource: Resource) => {
+    (resourceId: string | number, resource: Resource) => {
+      const workspaceResourceId = toWorkspaceResourceId(resourceId)
+
       setBasicInfoDrafts((current) => {
-        if (current[resourceId]) {
+        if (current[workspaceResourceId]) {
           return current
         }
 
         return {
           ...current,
-          [resourceId]: createBasicInfoDraftFromResource(resource),
+          [workspaceResourceId]: createBasicInfoDraftFromResource(resource),
         }
       })
     },
@@ -38,16 +41,18 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
   )
 
   const updateBasicInfoField = useCallback(
-    (resourceId: string, field: keyof BasicInfo, value: string) => {
+    (resourceId: string | number, field: keyof BasicInfo, value: string) => {
+      const workspaceResourceId = toWorkspaceResourceId(resourceId)
+
       setBasicInfoDrafts((current) => {
-        const draft = current[resourceId]
+        const draft = current[workspaceResourceId]
         if (!draft) {
           return current
         }
 
         return {
           ...current,
-          [resourceId]: {
+          [workspaceResourceId]: {
             ...draft,
             [field]: value,
           },
@@ -58,37 +63,47 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
   )
 
   const clearBasicInfoDraft = useCallback(
-    (resourceId: string, resourceName: string) => {
+    (resourceId: string | number, resourceName: string) => {
+      const workspaceResourceId = toWorkspaceResourceId(resourceId)
+
       setBasicInfoDrafts((current) => ({
         ...current,
-        [resourceId]: createEmptyBasicInfoDraft(resourceName),
+        [workspaceResourceId]: createEmptyBasicInfoDraft(resourceName),
       }))
     },
     [],
   )
 
-  const syncBasicInfoDraft = useCallback((resourceId: string, resource: Resource) => {
-    setBasicInfoDrafts((current) => ({
-      ...current,
-      [resourceId]: createBasicInfoDraftFromResource(resource),
-    }))
-  }, [])
+  const syncBasicInfoDraft = useCallback(
+    (resourceId: string | number, resource: Resource) => {
+      const workspaceResourceId = toWorkspaceResourceId(resourceId)
+
+      setBasicInfoDrafts((current) => ({
+        ...current,
+        [workspaceResourceId]: createBasicInfoDraftFromResource(resource),
+      }))
+    },
+    [],
+  )
 
   const getProjectDetailsDraft = useCallback(
-    (resourceId: string) => projectDetailsDrafts[resourceId],
+    (resourceId: string | number) =>
+      projectDetailsDrafts[toWorkspaceResourceId(resourceId)],
     [projectDetailsDrafts],
   )
 
   const initializeProjectDetailsDraft = useCallback(
-    (resourceId: string, resource: Resource) => {
+    (resourceId: string | number, resource: Resource) => {
+      const workspaceResourceId = toWorkspaceResourceId(resourceId)
+
       setProjectDetailsDrafts((current) => {
-        if (current[resourceId]) {
+        if (current[workspaceResourceId]) {
           return current
         }
 
         return {
           ...current,
-          [resourceId]: createProjectDetailsDraftFromResource(resource),
+          [workspaceResourceId]: createProjectDetailsDraftFromResource(resource),
         }
       })
     },
@@ -97,19 +112,21 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
 
   const updateProjectDetailsField = useCallback(
     (
-      resourceId: string,
+      resourceId: string | number,
       field: 'projectName' | 'budget' | 'category',
       value: string,
     ) => {
+      const workspaceResourceId = toWorkspaceResourceId(resourceId)
+
       setProjectDetailsDrafts((current) => {
-        const draft = current[resourceId]
+        const draft = current[workspaceResourceId]
         if (!draft) {
           return current
         }
 
         return {
           ...current,
-          [resourceId]: {
+          [workspaceResourceId]: {
             ...draft,
             [field]: value,
           },
@@ -120,16 +137,18 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
   )
 
   const updateProjectDetailsOptions = useCallback(
-    (resourceId: string, options: string[]) => {
+    (resourceId: string | number, options: string[]) => {
+      const workspaceResourceId = toWorkspaceResourceId(resourceId)
+
       setProjectDetailsDrafts((current) => {
-        const draft = current[resourceId]
+        const draft = current[workspaceResourceId]
         if (!draft) {
           return current
         }
 
         return {
           ...current,
-          [resourceId]: {
+          [workspaceResourceId]: {
             ...draft,
             options,
           },
@@ -139,18 +158,22 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
     [],
   )
 
-  const clearProjectDetailsDraft = useCallback((resourceId: string) => {
+  const clearProjectDetailsDraft = useCallback((resourceId: string | number) => {
+    const workspaceResourceId = toWorkspaceResourceId(resourceId)
+
     setProjectDetailsDrafts((current) => ({
       ...current,
-      [resourceId]: createEmptyProjectDetailsDraft(),
+      [workspaceResourceId]: createEmptyProjectDetailsDraft(),
     }))
   }, [])
 
   const syncProjectDetailsDraft = useCallback(
-    (resourceId: string, resource: Resource) => {
+    (resourceId: string | number, resource: Resource) => {
+      const workspaceResourceId = toWorkspaceResourceId(resourceId)
+
       setProjectDetailsDrafts((current) => ({
         ...current,
-        [resourceId]: createProjectDetailsDraftFromResource(resource),
+        [workspaceResourceId]: createProjectDetailsDraftFromResource(resource),
       }))
     },
     [],
@@ -158,6 +181,8 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
 
   const value = useMemo(
     () => ({
+      basicInfoDrafts,
+      projectDetailsDrafts,
       getBasicInfoDraft,
       initializeBasicInfoDraft,
       updateBasicInfoField,
@@ -171,6 +196,8 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
       syncProjectDetailsDraft,
     }),
     [
+      basicInfoDrafts,
+      projectDetailsDrafts,
       clearBasicInfoDraft,
       clearProjectDetailsDraft,
       getBasicInfoDraft,
