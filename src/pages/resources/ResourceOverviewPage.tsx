@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { useProvisionResourceMutation, useReplaceResourceMutation, useResourceQuery } from '../../api'
 import { Badge, Button, Card } from '../../design-system'
+import { useConfirmDialog } from '../../hooks/useConfirmDialog'
 import { paths } from '../../routes/paths'
 import {
   buildReplaceResourcePayload,
@@ -48,15 +49,18 @@ export function ResourceOverviewPage() {
     syncBasicInfoDraft,
     syncProjectDetailsDraft,
   } = useResourceWorkspace()
+  const confirmDialog = useConfirmDialog()
 
-  const handleProvision = () => {
+  const handleProvision = async () => {
     if (!resourceId || !resourceQuery.data) {
       return
     }
 
-    const confirmed = window.confirm(
-      `Complete resource "${resourceQuery.data.name}"? This will mark it as completed.`,
-    )
+    const confirmed = await confirmDialog({
+      title: 'Complete resource',
+      message: `Complete resource "${resourceQuery.data.name}"? This will mark it as completed.`,
+      confirmLabel: 'Complete resource',
+    })
     if (!confirmed) {
       return
     }
@@ -64,7 +68,7 @@ export function ResourceOverviewPage() {
     provisionMutation.mutate(resourceId)
   }
 
-  const handleSubmitChanges = () => {
+  const handleSubmitChanges = async () => {
     if (!resourceId || !resourceQuery.data) {
       return
     }
@@ -81,9 +85,11 @@ export function ResourceOverviewPage() {
       return
     }
 
-    const confirmed = window.confirm(
-      `Submit all changes to "${resource.name}"? This will replace the saved resource data.`,
-    )
+    const confirmed = await confirmDialog({
+      title: 'Submit changes',
+      message: `Submit all changes to "${resource.name}"? This will replace the saved resource data.`,
+      confirmLabel: 'Submit changes',
+    })
     if (!confirmed) {
       return
     }

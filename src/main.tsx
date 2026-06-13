@@ -5,6 +5,7 @@ import App from './App'
 import { GlobalStyles } from './design-system/theme/GlobalStyles'
 import { theme } from './design-system/theme/theme'
 import { AppSnackbarProvider } from './providers/AppSnackbarProvider'
+import { ConfirmDialogProvider } from './components/confirm-dialog/ConfirmDialogProvider'
 import { QueryProvider } from './providers/QueryProvider'
 
 createRoot(document.getElementById('root')!).render(
@@ -12,8 +13,10 @@ createRoot(document.getElementById('root')!).render(
     <QueryProvider>
       <ThemeProvider theme={theme}>
         <AppSnackbarProvider>
-          <GlobalStyles />
-          <App />
+          <ConfirmDialogProvider>
+            <GlobalStyles />
+            <App />
+          </ConfirmDialogProvider>
         </AppSnackbarProvider>
       </ThemeProvider>
     </QueryProvider>

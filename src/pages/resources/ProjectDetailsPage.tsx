@@ -6,6 +6,7 @@ import {
 } from '../../api'
 import { Button, Card, CheckboxGroup, Input, Select } from '../../design-system'
 import { useAppSnackbar } from '../../hooks/useAppSnackbar'
+import { useConfirmDialog } from '../../hooks/useConfirmDialog'
 import { paths } from '../../routes/paths'
 import {
   hasProjectDetailsFieldErrors,
@@ -41,6 +42,7 @@ export function ProjectDetailsPage() {
   const resourceQuery = useResourceQuery(resourceId)
   const updateProjectDetailsMutation = useUpdateProjectDetailsMutation()
   const { showError, showSuccess } = useAppSnackbar()
+  const confirmDialog = useConfirmDialog()
   const {
     clearProjectDetailsDraft,
     getProjectDetailsDraft,
@@ -96,12 +98,17 @@ export function ProjectDetailsPage() {
     )
   }
 
-  const handleClear = () => {
+  const handleClear = async () => {
     if (!resourceId) {
       return
     }
 
-    const confirmed = window.confirm('Clear all Project Details fields?')
+    const confirmed = await confirmDialog({
+      title: 'Clear Project Details',
+      message: 'Clear all Project Details fields?',
+      confirmLabel: 'Clear form',
+      destructive: true,
+    })
     if (!confirmed) {
       return
     }

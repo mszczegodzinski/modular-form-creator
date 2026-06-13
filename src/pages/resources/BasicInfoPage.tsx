@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useResourceQuery, useUpdateBasicInfoMutation } from '../../api'
 import { Button, Card, Input, Select } from '../../design-system'
 import { useAppSnackbar } from '../../hooks/useAppSnackbar'
+import { useConfirmDialog } from '../../hooks/useConfirmDialog'
 import { paths } from '../../routes/paths'
 import {
   hasBasicInfoFieldErrors,
@@ -34,6 +35,7 @@ export function BasicInfoPage() {
   const resourceQuery = useResourceQuery(resourceId)
   const updateBasicInfoMutation = useUpdateBasicInfoMutation()
   const { showError, showSuccess } = useAppSnackbar()
+  const confirmDialog = useConfirmDialog()
   const {
     clearBasicInfoDraft,
     getBasicInfoDraft,
@@ -88,14 +90,17 @@ export function BasicInfoPage() {
     )
   }
 
-  const handleClear = () => {
+  const handleClear = async () => {
     if (!resourceId || !resourceQuery.data) {
       return
     }
 
-    const confirmed = window.confirm(
-      'Clear all Basic Info fields? Resource name will stay unchanged.',
-    )
+    const confirmed = await confirmDialog({
+      title: 'Clear Basic Info',
+      message: 'Clear all Basic Info fields? Resource name will stay unchanged.',
+      confirmLabel: 'Clear form',
+      destructive: true,
+    })
     if (!confirmed) {
       return
     }

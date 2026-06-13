@@ -6,6 +6,7 @@ import {
 } from '../../api'
 import { Badge, Button, Card, Input } from '../../design-system'
 import { useAppSnackbar } from '../../hooks/useAppSnackbar'
+import { useConfirmDialog } from '../../hooks/useConfirmDialog'
 import { paths } from '../../routes/paths'
 import {
   CreateForm,
@@ -31,6 +32,7 @@ export function ResourcesListPage() {
   const createResourceMutation = useCreateResourceMutation()
   const deleteResourceMutation = useDeleteResourceMutation()
   const { showError } = useAppSnackbar()
+  const confirmDialog = useConfirmDialog()
 
   useEffect(() => {
     if (!resourcesQuery.isError) {
@@ -60,10 +62,13 @@ export function ResourcesListPage() {
     )
   }
 
-  const handleDelete = (id: number, name: string) => {
-    const confirmed = window.confirm(
-      `Delete resource "${name}"? This action cannot be undone.`,
-    )
+  const handleDelete = async (id: number, name: string) => {
+    const confirmed = await confirmDialog({
+      title: 'Delete resource',
+      message: `Delete resource "${name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
     if (!confirmed) {
       return
     }
