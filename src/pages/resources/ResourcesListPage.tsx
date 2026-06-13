@@ -1,14 +1,34 @@
 import { useState, type ChangeEvent, type SubmitEventHandler } from 'react'
-import { Link } from 'react-router-dom'
-import styled from 'styled-components'
-import { useCreateResourceMutation, useResourcesQuery } from '../../api'
+import {
+  useCreateResourceMutation,
+  useDeleteResourceMutation,
+  useResourcesQuery,
+} from '../../api'
 import { Badge, Button, Card, Input } from '../../design-system'
 import { paths } from '../../routes/paths'
+import {
+  CreateForm,
+  DeleteButton,
+  Description,
+  ErrorText,
+  Header,
+  Page,
+  ResourceActions,
+  ResourceInfo,
+  ResourceLink,
+  ResourceList,
+  ResourceMeta,
+  ResourceRow,
+  SectionTitle,
+  StatusText,
+  Title,
+} from './ResourcesListPage.styles'
 
 export function ResourcesListPage() {
   const [resourceName, setResourceName] = useState('')
   const resourcesQuery = useResourcesQuery()
   const createResourceMutation = useCreateResourceMutation()
+  const deleteResourceMutation = useDeleteResourceMutation()
 
   const handleCreate: SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault()
@@ -27,9 +47,25 @@ export function ResourcesListPage() {
     )
   }
 
+  const handleDelete = (id: number, name: string) => {
+    const confirmed = window.confirm(
+      `Delete resource "${name}"? This action cannot be undone.`,
+    )
+    if (!confirmed) {
+      return
+    }
+
+    deleteResourceMutation.mutate(id)
+  }
+
   const createError =
     createResourceMutation.error instanceof Error
       ? createResourceMutation.error.message
+      : undefined
+
+  const deleteError =
+    deleteResourceMutation.error instanceof Error
+      ? deleteResourceMutation.error.message
       : undefined
 
   return (
@@ -66,6 +102,7 @@ export function ResourcesListPage() {
       <Card variant="elevated">
         <SectionTitle>Resource list</SectionTitle>
 
+        {deleteError && <ErrorText>{deleteError}</ErrorText>}
         {resourcesQuery.isPending && <StatusText>Loading resources…</StatusText>}
         {resourcesQuery.isError && (
           <ErrorText>
@@ -81,104 +118,42 @@ export function ResourcesListPage() {
 
         {resourcesQuery.isSuccess && resourcesQuery.data.items.length > 0 && (
           <ResourceList>
-            {resourcesQuery.data.items.map((resource) => (
-              <ResourceRow key={resource._id}>
-                <ResourceInfo>
-                  <ResourceLink to={paths.resourceOverview(resource.resourceId)}>
-                    {resource.name}
-                  </ResourceLink>
-                  <ResourceMeta>ID {resource.resourceId}</ResourceMeta>
-                </ResourceInfo>
-                <Badge variant={resource.status === 'completed' ? 'success' : 'neutral'}>
-                  {resource.status}
-                </Badge>
-              </ResourceRow>
-            ))}
+            {resourcesQuery.data.items.map((resource) => {
+              const isDeleting =
+                deleteResourceMutation.isPending &&
+                deleteResourceMutation.variables === resource.resourceId
+
+              return (
+                <ResourceRow key={resource._id}>
+                  <ResourceInfo>
+                    <ResourceLink to={paths.resourceOverview(resource.resourceId)}>
+                      {resource.name}
+                    </ResourceLink>
+                    <ResourceMeta>ID {resource.resourceId}</ResourceMeta>
+                  </ResourceInfo>
+                  <ResourceActions>
+                    <Badge
+                      variant={resource.status === 'completed' ? 'success' : 'neutral'}
+                    >
+                      {resource.status}
+                    </Badge>
+                    <DeleteButton
+                      type="button"
+                      variant="ghost"
+                      size="small"
+                      disabled={deleteResourceMutation.isPending}
+                      onClick={() => handleDelete(resource.resourceId, resource.name)}
+                      state={isDeleting ? 'disabled' : 'normal'}
+                    >
+                      {isDeleting ? 'Deleting…' : 'Delete'}
+                    </DeleteButton>
+                  </ResourceActions>
+                </ResourceRow>
+              )
+            })}
           </ResourceList>
         )}
       </Card>
     </Page>
   )
 }
-
-const Page = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`
-
-const Header = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-`
-
-const Title = styled.h1`
-  font-size: 2rem;
-`
-
-const Description = styled.p`
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
-
-const SectionTitle = styled.h2`
-  font-size: 1.125rem;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-`
-
-const CreateForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-  align-items: flex-start;
-`
-
-const StatusText = styled.p`
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
-
-const ErrorText = styled.p`
-  color: ${({ theme }) => theme.colors.warning};
-`
-
-const ResourceList = styled.ul`
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-`
-
-const ResourceRow = styled.li`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.sm} 0;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-
-  &:last-child {
-    border-bottom: none;
-  }
-`
-
-const ResourceInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-`
-
-const ResourceLink = styled(Link)`
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.primary};
-
-  &:hover {
-    text-decoration: underline;
-  }
-`
-
-const ResourceMeta = styled.span`
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
