@@ -130,6 +130,3 @@ API behavior and endpoint details: [backend/README.md](modular-form-creator/back
 - Required routes are missing or clearly non-functional.
 - Core status flow is incorrect (for example, invalid draft/completed transitions).
 - Assignment is submitted in any form other than a GitHub repository.
-
-taskmodularformcreator 1.md
-Wyświetlanie taskmodularformcreator 1.md.

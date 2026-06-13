@@ -117,14 +117,23 @@ export const NavLink = styled(Link)`
   }
 `
 
-export const ModuleLink = styled(NavLink)`
-  font-size: 0.875rem;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+export const ModuleLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 14px;
   border-radius: ${({ theme }) => theme.radii.pill};
   text-decoration: none;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: ${({ theme }) => theme.colors.primaryStrong};
+  border: 1px solid transparent;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.04);
+    border-color: ${({ theme }) => theme.colors.primary};
+    background: rgba(31, 122, 140, 0.08);
     text-decoration: none;
   }
 `
