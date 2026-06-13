@@ -29,7 +29,7 @@ import {
   StatusText,
   Title,
 } from './BasicInfoPage.styles'
-import { canAccessProjectDetails } from './resourceModuleStatus'
+import { canAccessProjectDetails, canPatchModuleForms } from './resourceModuleStatus'
 import { useResourceWorkspace } from './useResourceWorkspace'
 import {
   CATEGORY_OPTIONS,
@@ -94,7 +94,11 @@ export function ProjectDetailsPage() {
   const handleSave: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault()
 
-    if (!resourceId || !draft || resourceQuery.data?.status === 'completed') {
+    if (!resourceId || !draft || !resourceQuery.data) {
+      return
+    }
+
+    if (!canPatchModuleForms(resourceQuery.data)) {
       return
     }
 
@@ -173,7 +177,7 @@ export function ProjectDetailsPage() {
   }
 
   const resource = resourceQuery.data
-  const isCompleted = resource.status === 'completed'
+  const canPatchModule = canPatchModuleForms(resource)
   const isAccessible = canAccessProjectDetails(resource)
 
   if (!isAccessible) {
@@ -216,9 +220,9 @@ export function ProjectDetailsPage() {
         <CardIntro>
           <ProjectDetailsSaveStatus key={resourceId} draft={draft} />
           <DraftHint>
-            {isCompleted
-              ? 'Submit your changes explicitly to save them permanently.'
-              : 'Use Save module to store Project Details on the server. To finish the resource, complete both modules and choose Complete resource on the overview page.'}
+            {canPatchModule
+              ? 'Use Save module to store Project Details on the server. To finish the resource, complete both modules and choose Complete resource on the overview page.'
+              : 'This resource is completed. Partial saves are disabled — edit your changes here, then submit the full resource from the overview page.'}
           </DraftHint>
         </CardIntro>
 
@@ -279,7 +283,7 @@ export function ProjectDetailsPage() {
               <Button type="button" variant="ghost" size="small" onClick={handleClear}>
                 Clear form
               </Button>
-              {!isCompleted && (
+              {!canPatchModule ? null : (
                 <Button
                   type="submit"
                   size="small"

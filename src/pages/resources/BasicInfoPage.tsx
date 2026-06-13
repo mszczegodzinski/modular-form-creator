@@ -25,6 +25,7 @@ import {
   Title,
 } from './BasicInfoPage.styles'
 import { useResourceWorkspace } from './useResourceWorkspace'
+import { canPatchModuleForms } from './resourceModuleStatus'
 import { getResourceName, PRIORITY_OPTIONS } from './resourceWorkspace.utils'
 
 const SAVE_STATUS_DEBOUNCE_MS = 300
@@ -84,7 +85,11 @@ export function BasicInfoPage() {
   const handleSave: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault()
 
-    if (!resourceId || !draft || resourceQuery.data?.status === 'completed') {
+    if (!resourceId || !draft || !resourceQuery.data) {
+      return
+    }
+
+    if (!canPatchModuleForms(resourceQuery.data)) {
       return
     }
 
@@ -170,7 +175,7 @@ export function BasicInfoPage() {
     )
   }
 
-  const isCompleted = resourceQuery.data.status === 'completed'
+  const canPatchModule = canPatchModuleForms(resourceQuery.data)
 
   return (
     <Page>
@@ -183,9 +188,9 @@ export function BasicInfoPage() {
         <CardIntro>
           <BasicInfoSaveStatus key={resourceId} draft={draft} />
           <DraftHint>
-            {isCompleted
-              ? 'Submit your changes explicitly to save them permanently.'
-              : 'Use Save module to store Basic Info on the server. To finish the resource, complete both modules and choose Complete resource on the overview page.'}
+            {canPatchModule
+              ? 'Use Save module to store Basic Info on the server. To finish the resource, complete both modules and choose Complete resource on the overview page.'
+              : 'This resource is completed. Partial saves are disabled — edit your changes here, then submit the full resource from the overview page.'}
           </DraftHint>
         </CardIntro>
 
@@ -257,7 +262,7 @@ export function BasicInfoPage() {
               <Button type="button" variant="ghost" size="small" onClick={handleClear}>
                 Clear form
               </Button>
-              {!isCompleted && (
+              {!canPatchModule ? null : (
                 <Button
                   type="submit"
                   size="small"

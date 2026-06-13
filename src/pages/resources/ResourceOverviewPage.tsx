@@ -14,7 +14,6 @@ import {
   BackLink,
   ErrorText,
   Header,
-  Meta,
   ModuleActions,
   ModuleHint,
   ModuleInfo,
@@ -52,9 +51,7 @@ export function ResourceOverviewPage() {
   }
 
   const provisionError =
-    provisionMutation.error instanceof Error
-      ? provisionMutation.error.message
-      : undefined
+    provisionMutation.error instanceof Error ? provisionMutation.error.message : undefined
 
   if (!resourceId) {
     return (
@@ -105,7 +102,6 @@ export function ResourceOverviewPage() {
             {resource.status}
           </Badge>
         </TitleRow>
-        <Meta>Resource ID {resource.resourceId}</Meta>
       </Header>
 
       <Card variant="elevated">
@@ -114,9 +110,7 @@ export function ResourceOverviewPage() {
           <ModuleRow>
             <ModuleInfo>
               <ModuleName>Basic Info</ModuleName>
-              <ModuleHint>
-                Owner, contact details, description, and priority.
-              </ModuleHint>
+              <ModuleHint>Owner, contact details, description, and priority.</ModuleHint>
             </ModuleInfo>
             <ModuleActions>
               <Badge variant={basicInfoComplete ? 'success' : 'warning'}>
@@ -176,8 +170,8 @@ export function ResourceOverviewPage() {
 
           {resource.status === 'completed' ? (
             <ActionHint>
-              This resource is completed. Module edits require explicit submit on
-              the module forms.
+              This resource is completed. Module edits require explicit submit on the
+              module forms.
             </ActionHint>
           ) : (
             <>

@@ -9,13 +9,10 @@ export function ResourceDetailsPage() {
   return (
     <Page>
       <Title>Resource details</Title>
-      <Description>Summary for resource ID: {resourceId}</Description>
       <Card variant="elevated">
         <NavList>
           <li>
-            <Link to={paths.resourceOverview(resourceId ?? '')}>
-              Back to overview
-            </Link>
+            <Link to={paths.resourceOverview(resourceId ?? '')}>Back to overview</Link>
           </li>
         </NavList>
       </Card>
@@ -31,10 +28,6 @@ const Page = styled.div`
 
 const Title = styled.h1`
   font-size: 2rem;
-`
-
-const Description = styled.p`
-  color: ${({ theme }) => theme.colors.inkMuted};
 `
 
 const NavList = styled.ul`

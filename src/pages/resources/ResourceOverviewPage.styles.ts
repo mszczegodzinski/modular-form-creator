@@ -35,10 +35,6 @@ export const Title = styled.h1`
   font-size: 2rem;
 `
 
-export const Meta = styled.p`
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
-
 export const SectionTitle = styled.h2`
   font-size: 1.125rem;
   margin-bottom: ${({ theme }) => theme.spacing.md};

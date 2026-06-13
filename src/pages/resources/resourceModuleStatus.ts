@@ -1,4 +1,12 @@
-import type { BasicInfo, ProjectDetails, Resource } from '../../api'
+import type { BasicInfo, ProjectDetails, Resource, ResourceStatus } from '../../api'
+
+export function isResourceDraft(status: ResourceStatus): boolean {
+  return status === 'draft'
+}
+
+export function canPatchModuleForms(resource: Resource): boolean {
+  return isResourceDraft(resource.status)
+}
 
 export function isBasicInfoComplete(basicInfo: BasicInfo): boolean {
   return Boolean(
