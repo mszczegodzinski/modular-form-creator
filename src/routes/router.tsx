@@ -6,6 +6,7 @@ import {
   ResourceDetailsPage,
   ResourceOverviewPage,
   ResourcesListPage,
+  ResourceWorkspaceLayout,
 } from '../pages/resources'
 import { paths } from './paths'
 
@@ -16,22 +17,12 @@ export function AppRouter() {
         <Route path="/" element={<Navigate to={paths.resources} replace />} />
         <Route element={<AppLayout />}>
           <Route path={paths.resources} element={<ResourcesListPage />} />
-          <Route
-            path="/resources/:resourceId/details"
-            element={<ResourceDetailsPage />}
-          />
-          <Route
-            path="/resources/:resourceId/basic-info"
-            element={<BasicInfoPage />}
-          />
-          <Route
-            path="/resources/:resourceId/project-details"
-            element={<ProjectDetailsPage />}
-          />
-          <Route
-            path="/resources/:resourceId"
-            element={<ResourceOverviewPage />}
-          />
+          <Route path="/resources/:resourceId" element={<ResourceWorkspaceLayout />}>
+            <Route index element={<ResourceOverviewPage />} />
+            <Route path="details" element={<ResourceDetailsPage />} />
+            <Route path="basic-info" element={<BasicInfoPage />} />
+            <Route path="project-details" element={<ProjectDetailsPage />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to={paths.resources} replace />} />
       </Routes>
