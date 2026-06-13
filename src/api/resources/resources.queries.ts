@@ -52,7 +52,7 @@ export function useResourceQuery(id: string | undefined) {
     queryKey: resourcesKeys.detail(id ?? ''),
     queryFn: () => fetchResource(id!),
     enabled: Boolean(id),
-    refetchOnMount: 'always',
+    staleTime: 60_000,
   })
 }
 
