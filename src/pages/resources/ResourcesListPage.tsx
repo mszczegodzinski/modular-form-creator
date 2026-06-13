@@ -1,10 +1,11 @@
-import { useState, type ChangeEvent, type SubmitEventHandler } from 'react'
+import { useEffect, useState, type ChangeEvent, type SubmitEventHandler } from 'react'
 import {
   useCreateResourceMutation,
   useDeleteResourceMutation,
   useResourcesQuery,
 } from '../../api'
 import { Badge, Button, Card, Input } from '../../design-system'
+import { useAppSnackbar } from '../../hooks/useAppSnackbar'
 import { paths } from '../../routes/paths'
 import {
   CreateForm,
@@ -29,6 +30,15 @@ export function ResourcesListPage() {
   const resourcesQuery = useResourcesQuery()
   const createResourceMutation = useCreateResourceMutation()
   const deleteResourceMutation = useDeleteResourceMutation()
+  const { showError } = useAppSnackbar()
+
+  useEffect(() => {
+    if (!resourcesQuery.isError) {
+      return
+    }
+
+    showError(resourcesQuery.error, 'Failed to load resources.')
+  }, [resourcesQuery.error, resourcesQuery.isError, showError])
 
   const handleCreate: SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault()
@@ -42,6 +52,9 @@ export function ResourcesListPage() {
       {
         onSuccess: () => {
           setResourceName('')
+        },
+        onError: (error) => {
+          showError(error, 'Failed to create resource.')
         },
       },
     )
@@ -57,11 +70,6 @@ export function ResourcesListPage() {
 
     deleteResourceMutation.mutate(id)
   }
-
-  const createError =
-    createResourceMutation.error instanceof Error
-      ? createResourceMutation.error.message
-      : undefined
 
   const deleteError =
     deleteResourceMutation.error instanceof Error
@@ -87,7 +95,6 @@ export function ResourcesListPage() {
             onChange={(e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) =>
               setResourceName(e.target.value)
             }
-            error={createError}
           />
           <Button
             type="submit"
@@ -105,11 +112,7 @@ export function ResourcesListPage() {
         {deleteError && <ErrorText>{deleteError}</ErrorText>}
         {resourcesQuery.isPending && <StatusText>Loading resources…</StatusText>}
         {resourcesQuery.isError && (
-          <ErrorText>
-            {resourcesQuery.error instanceof Error
-              ? resourcesQuery.error.message
-              : 'Failed to load resources.'}
-          </ErrorText>
+          <StatusText>Unable to display resources.</StatusText>
         )}
 
         {resourcesQuery.isSuccess && resourcesQuery.data.items.length === 0 && (
