@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type SubmitEventHandler } from 'react'
 import { useParams } from 'react-router-dom'
-import { useResourceQuery, useUpdateBasicInfoMutation, type BasicInfo } from '../../api'
+import { useResourceQuery, useUpdateBasicInfoMutation } from '../../api'
 import { Button, Card, Input, Select } from '../../design-system'
 import { paths } from '../../routes/paths'
 import {
@@ -19,46 +19,14 @@ import {
   FormActionsEnd,
   Header,
   Page,
-  SaveStatus,
-  SaveStatusIcon,
   StatusText,
   Title,
 } from './BasicInfoPage.styles'
+import { hasBasicInfoDraftEdits } from './moduleDraftEdits'
+import { ModuleFormSaveStatus } from './ModuleFormSaveStatus'
 import { useResourceWorkspace } from './useResourceWorkspace'
 import { canPatchModuleForms } from './resourceModuleStatus'
 import { getResourceName, PRIORITY_OPTIONS } from './resourceWorkspace.utils'
-
-const SAVE_STATUS_DEBOUNCE_MS = 300
-
-function BasicInfoSaveStatus({ draft }: { draft: BasicInfo }) {
-  const draftSignature = JSON.stringify(draft)
-  const [debouncedSignature, setDebouncedSignature] = useState(draftSignature)
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedSignature(draftSignature)
-    }, SAVE_STATUS_DEBOUNCE_MS)
-
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [draftSignature])
-
-  const isSaved = draftSignature === debouncedSignature
-
-  return (
-    <SaveStatus role="status" aria-live="polite" $isSaved={isSaved}>
-      {isSaved ? (
-        <>
-          <SaveStatusIcon aria-hidden="true">✓</SaveStatusIcon>
-          All changes saved
-        </>
-      ) : (
-        'Saving…'
-      )}
-    </SaveStatus>
-  )
-}
 
 export function BasicInfoPage() {
   const { resourceId } = useParams<{ resourceId: string }>()
@@ -176,6 +144,7 @@ export function BasicInfoPage() {
   }
 
   const canPatchModule = canPatchModuleForms(resourceQuery.data)
+  const hasUnsavedEdits = hasBasicInfoDraftEdits(resourceQuery.data, draft)
 
   return (
     <Page>
@@ -186,7 +155,12 @@ export function BasicInfoPage() {
 
       <Card variant="elevated">
         <CardIntro>
-          <BasicInfoSaveStatus key={resourceId} draft={draft} />
+          <ModuleFormSaveStatus
+            key={resourceId}
+            draftSignature={JSON.stringify(draft)}
+            hasUnsavedEdits={hasUnsavedEdits}
+            isCompletedResource={!canPatchModule}
+          />
           <DraftHint>
             {canPatchModule
               ? 'Use Save module to store Basic Info on the server. To finish the resource, complete both modules and choose Complete resource on the overview page.'

@@ -83,15 +83,24 @@ export const CardIntro = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.md};
 `
 
-export const SaveStatus = styled.p<{ $isSaved: boolean }>`
+export const SaveStatus = styled.p<{ $tone: 'success' | 'info' | 'neutral' }>`
   display: inline-flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   min-height: 1rem;
   font-size: 0.875rem;
-  font-weight: ${({ $isSaved }) => ($isSaved ? 600 : 500)};
-  color: ${({ theme, $isSaved }) =>
-    $isSaved ? theme.colors.success : theme.colors.inkMuted};
+  font-weight: ${({ $tone }) => ($tone === 'success' ? 600 : 500)};
+  color: ${({ theme, $tone }) => {
+    if ($tone === 'success') {
+      return theme.colors.success
+    }
+
+    if ($tone === 'info') {
+      return theme.colors.info
+    }
+
+    return theme.colors.inkMuted
+  }};
   margin: 0;
   width: fit-content;
 `

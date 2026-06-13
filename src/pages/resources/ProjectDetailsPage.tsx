@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom'
 import {
   useResourceQuery,
   useUpdateProjectDetailsMutation,
-  type ProjectDetails,
 } from '../../api'
 import { Button, Card, CheckboxGroup, Input, Select } from '../../design-system'
 import { paths } from '../../routes/paths'
@@ -24,49 +23,17 @@ import {
   Header,
   LockedLink,
   Page,
-  SaveStatus,
-  SaveStatusIcon,
   StatusText,
   Title,
 } from './BasicInfoPage.styles'
+import { hasProjectDetailsDraftEdits } from './moduleDraftEdits'
+import { ModuleFormSaveStatus } from './ModuleFormSaveStatus'
 import { canAccessProjectDetails, canPatchModuleForms } from './resourceModuleStatus'
 import { useResourceWorkspace } from './useResourceWorkspace'
 import {
   CATEGORY_OPTIONS,
   TEAM_MEMBER_OPTIONS,
 } from './resourceWorkspace.utils'
-
-const SAVE_STATUS_DEBOUNCE_MS = 300
-
-function ProjectDetailsSaveStatus({ draft }: { draft: ProjectDetails }) {
-  const draftSignature = JSON.stringify(draft)
-  const [debouncedSignature, setDebouncedSignature] = useState(draftSignature)
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedSignature(draftSignature)
-    }, SAVE_STATUS_DEBOUNCE_MS)
-
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [draftSignature])
-
-  const isSaved = draftSignature === debouncedSignature
-
-  return (
-    <SaveStatus role="status" aria-live="polite" $isSaved={isSaved}>
-      {isSaved ? (
-        <>
-          <SaveStatusIcon aria-hidden="true">✓</SaveStatusIcon>
-          All changes saved
-        </>
-      ) : (
-        'Saving…'
-      )}
-    </SaveStatus>
-  )
-}
 
 export function ProjectDetailsPage() {
   const { resourceId } = useParams<{ resourceId: string }>()
@@ -209,6 +176,8 @@ export function ProjectDetailsPage() {
     )
   }
 
+  const hasUnsavedEdits = hasProjectDetailsDraftEdits(resource, draft)
+
   return (
     <Page>
       <Header>
@@ -218,7 +187,12 @@ export function ProjectDetailsPage() {
 
       <Card variant="elevated">
         <CardIntro>
-          <ProjectDetailsSaveStatus key={resourceId} draft={draft} />
+          <ModuleFormSaveStatus
+            key={resourceId}
+            draftSignature={JSON.stringify(draft)}
+            hasUnsavedEdits={hasUnsavedEdits}
+            isCompletedResource={!canPatchModule}
+          />
           <DraftHint>
             {canPatchModule
               ? 'Use Save module to store Project Details on the server. To finish the resource, complete both modules and choose Complete resource on the overview page.'
