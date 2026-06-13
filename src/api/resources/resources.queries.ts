@@ -3,7 +3,13 @@ import type {
   CreateResourcePayload,
   ListResourcesParams,
 } from '../types/resource'
-import { createResource, deleteResource, fetchResources } from './resources.api'
+import {
+  createResource,
+  deleteResource,
+  fetchResource,
+  fetchResources,
+  provisionResource,
+} from './resources.api'
 import { resourcesKeys } from './resources.keys'
 
 export function useResourcesQuery(params: ListResourcesParams = {}) {
@@ -30,6 +36,26 @@ export function useDeleteResourceMutation() {
   return useMutation({
     mutationFn: (resourceId: number) => deleteResource(resourceId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: resourcesKeys.lists() })
+    },
+  })
+}
+
+export function useResourceQuery(id: string | undefined) {
+  return useQuery({
+    queryKey: resourcesKeys.detail(id ?? ''),
+    queryFn: () => fetchResource(id!),
+    enabled: Boolean(id),
+  })
+}
+
+export function useProvisionResourceMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => provisionResource(id),
+    onSuccess: (resource, id) => {
+      queryClient.setQueryData(resourcesKeys.detail(id), resource)
       queryClient.invalidateQueries({ queryKey: resourcesKeys.lists() })
     },
   })

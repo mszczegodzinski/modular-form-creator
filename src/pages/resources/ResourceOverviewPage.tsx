@@ -1,57 +1,204 @@
 import { Link, useParams } from 'react-router-dom'
-import styled from 'styled-components'
-import { Card } from '../../design-system'
+import { useProvisionResourceMutation, useResourceQuery } from '../../api'
+import { Badge, Button, Card } from '../../design-system'
 import { paths } from '../../routes/paths'
+import {
+  canAccessProjectDetails,
+  canProvisionResource,
+  isBasicInfoComplete,
+  isProjectDetailsComplete,
+} from './resourceModuleStatus'
+import {
+  ActionHint,
+  ActionList,
+  BackLink,
+  ErrorText,
+  Header,
+  Meta,
+  ModuleActions,
+  ModuleHint,
+  ModuleInfo,
+  ModuleLink,
+  ModuleList,
+  ModuleName,
+  ModuleRow,
+  NavLink,
+  Page,
+  ProvisionButton,
+  SectionTitle,
+  StatusText,
+  Title,
+  TitleRow,
+} from './ResourceOverviewPage.styles'
 
 export function ResourceOverviewPage() {
   const { resourceId } = useParams<{ resourceId: string }>()
+  const resourceQuery = useResourceQuery(resourceId)
+  const provisionMutation = useProvisionResourceMutation()
+
+  const handleProvision = () => {
+    if (!resourceId || !resourceQuery.data) {
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Complete resource "${resourceQuery.data.name}"? This will mark it as completed.`,
+    )
+    if (!confirmed) {
+      return
+    }
+
+    provisionMutation.mutate(resourceId)
+  }
+
+  const provisionError =
+    provisionMutation.error instanceof Error
+      ? provisionMutation.error.message
+      : undefined
+
+  if (!resourceId) {
+    return (
+      <Page>
+        <ErrorText>Invalid resource URL.</ErrorText>
+        <Link to={paths.resources}>Back to resources</Link>
+      </Page>
+    )
+  }
+
+  if (resourceQuery.isPending) {
+    return (
+      <Page>
+        <StatusText>Loading resource…</StatusText>
+      </Page>
+    )
+  }
+
+  if (resourceQuery.isError) {
+    return (
+      <Page>
+        <Header>
+          <BackLink to={paths.resources}>← Back to resources</BackLink>
+          <Title>Resource overview</Title>
+        </Header>
+        <ErrorText>
+          {resourceQuery.error instanceof Error
+            ? resourceQuery.error.message
+            : 'Failed to load resource.'}
+        </ErrorText>
+      </Page>
+    )
+  }
+
+  const resource = resourceQuery.data
+  const basicInfoComplete = isBasicInfoComplete(resource.basicInfo)
+  const projectDetailsComplete = isProjectDetailsComplete(resource.projectDetails)
+  const projectDetailsAccessible = canAccessProjectDetails(resource)
+  const provisioningAllowed = canProvisionResource(resource)
 
   return (
     <Page>
-      <Title>Resource overview</Title>
-      <Description>Resource ID: {resourceId}</Description>
+      <Header>
+        <BackLink to={paths.resources}>← Back to resources</BackLink>
+        <TitleRow>
+          <Title>{resource.name}</Title>
+          <Badge variant={resource.status === 'completed' ? 'success' : 'neutral'}>
+            {resource.status}
+          </Badge>
+        </TitleRow>
+        <Meta>Resource ID {resource.resourceId}</Meta>
+      </Header>
+
       <Card variant="elevated">
-        <NavList>
-          <li>
-            <Link to={paths.resources}>Back to list</Link>
-          </li>
-          <li>
-            <Link to={paths.resourceDetails(resourceId ?? '')}>Details</Link>
-          </li>
-          <li>
-            <Link to={paths.basicInfo(resourceId ?? '')}>Basic Info</Link>
-          </li>
-          <li>
-            <Link to={paths.projectDetails(resourceId ?? '')}>
-              Project Details
-            </Link>
-          </li>
-        </NavList>
+        <SectionTitle>Modules</SectionTitle>
+        <ModuleList>
+          <ModuleRow>
+            <ModuleInfo>
+              <ModuleName>Basic Info</ModuleName>
+              <ModuleHint>
+                Owner, contact details, description, and priority.
+              </ModuleHint>
+            </ModuleInfo>
+            <ModuleActions>
+              <Badge variant={basicInfoComplete ? 'success' : 'warning'}>
+                {basicInfoComplete ? 'Complete' : 'Incomplete'}
+              </Badge>
+              <ModuleLink to={paths.basicInfo(resource.resourceId)}>
+                {basicInfoComplete ? 'Review' : 'Complete module'}
+              </ModuleLink>
+            </ModuleActions>
+          </ModuleRow>
+
+          <ModuleRow>
+            <ModuleInfo>
+              <ModuleName>Project Details</ModuleName>
+              <ModuleHint>
+                {projectDetailsAccessible
+                  ? 'Project name, budget, category, and options.'
+                  : 'Complete Basic Info first to unlock this module.'}
+              </ModuleHint>
+            </ModuleInfo>
+            <ModuleActions>
+              <Badge
+                variant={
+                  !projectDetailsAccessible
+                    ? 'neutral'
+                    : projectDetailsComplete
+                      ? 'success'
+                      : 'warning'
+                }
+              >
+                {!projectDetailsAccessible
+                  ? 'Locked'
+                  : projectDetailsComplete
+                    ? 'Complete'
+                    : 'Incomplete'}
+              </Badge>
+              {projectDetailsAccessible ? (
+                <ModuleLink to={paths.projectDetails(resource.resourceId)}>
+                  {projectDetailsComplete ? 'Review' : 'Complete module'}
+                </ModuleLink>
+              ) : (
+                <Button type="button" variant="ghost" size="small" state="locked">
+                  Complete module
+                </Button>
+              )}
+            </ModuleActions>
+          </ModuleRow>
+        </ModuleList>
+      </Card>
+
+      <Card variant="elevated">
+        <SectionTitle>Actions</SectionTitle>
+        <ActionList>
+          <NavLink to={paths.resourceDetails(resource.resourceId)}>
+            View resource summary
+          </NavLink>
+
+          {resource.status === 'completed' ? (
+            <ActionHint>
+              This resource is completed. Module edits require explicit submit on
+              the module forms.
+            </ActionHint>
+          ) : (
+            <>
+              {provisionError && <ErrorText>{provisionError}</ErrorText>}
+              <ProvisionButton
+                type="button"
+                size="small"
+                disabled={!provisioningAllowed || provisionMutation.isPending}
+                onClick={handleProvision}
+              >
+                {provisionMutation.isPending ? 'Completing…' : 'Complete resource'}
+              </ProvisionButton>
+              {!provisioningAllowed && (
+                <ActionHint>
+                  Complete both modules before marking this resource as completed.
+                </ActionHint>
+              )}
+            </>
+          )}
+        </ActionList>
       </Card>
     </Page>
   )
 }
-
-const Page = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Title = styled.h1`
-  font-size: 2rem;
-`
-
-const Description = styled.p`
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
-
-const NavList = styled.ul`
-  margin: 0;
-  padding-left: ${({ theme }) => theme.spacing.lg};
-
-  a {
-    color: ${({ theme }) => theme.colors.primary};
-    text-decoration: underline;
-  }
-`

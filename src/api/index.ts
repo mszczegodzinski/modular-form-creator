@@ -14,9 +14,13 @@ export type {
 export {
   createResource,
   deleteResource,
+  fetchResource,
   fetchResources,
+  provisionResource,
   resourcesKeys,
   useCreateResourceMutation,
   useDeleteResourceMutation,
+  useProvisionResourceMutation,
+  useResourceQuery,
   useResourcesQuery,
 } from './resources'

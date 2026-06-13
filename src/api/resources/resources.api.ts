@@ -29,9 +29,23 @@ export async function createResource(payload: CreateResourcePayload) {
   return data
 }
 
+export async function fetchResource(id: string) {
+  const { data } = await apiClient.get<Resource>(`/api/resources/${id}`)
+
+  return data
+}
+
 export async function deleteResource(resourceId: number) {
   const { data } = await apiClient.delete<Resource>(
     `/api/resources/${resourceId}`,
+  )
+
+  return data
+}
+
+export async function provisionResource(id: string) {
+  const { data } = await apiClient.patch<Resource>(
+    `/api/resources/${id}/provisioning`,
   )
 
   return data
