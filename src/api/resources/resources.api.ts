@@ -1,5 +1,6 @@
 import { apiClient } from '../client'
 import type {
+  BasicInfo,
   CreateResourcePayload,
   ListResourcesParams,
   ListResourcesResponse,
@@ -46,6 +47,15 @@ export async function deleteResource(resourceId: number) {
 export async function provisionResource(id: string) {
   const { data } = await apiClient.patch<Resource>(
     `/api/resources/${id}/provisioning`,
+  )
+
+  return data
+}
+
+export async function updateBasicInfo(id: string, payload: BasicInfo) {
+  const { data } = await apiClient.patch<Resource>(
+    `/api/resources/${id}/basic-info`,
+    payload,
   )
 
   return data

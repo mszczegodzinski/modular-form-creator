@@ -10,6 +10,7 @@ export interface ResourceWorkspaceContextValue {
     value: string,
   ) => void
   clearBasicInfoDraft: (resourceId: string, resourceName: string) => void
+  syncBasicInfoDraft: (resourceId: string, resource: Resource) => void
 }
 
 export const ResourceWorkspaceContext = createContext<

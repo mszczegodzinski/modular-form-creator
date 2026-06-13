@@ -18,9 +18,11 @@ export {
   fetchResources,
   provisionResource,
   resourcesKeys,
+  updateBasicInfo,
   useCreateResourceMutation,
   useDeleteResourceMutation,
   useProvisionResourceMutation,
   useResourceQuery,
   useResourcesQuery,
+  useUpdateBasicInfoMutation,
 } from './resources'

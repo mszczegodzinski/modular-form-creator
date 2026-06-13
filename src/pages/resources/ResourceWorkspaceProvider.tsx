@@ -62,17 +62,26 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
     [],
   )
 
+  const syncBasicInfoDraft = useCallback((resourceId: string, resource: Resource) => {
+    setBasicInfoDrafts((current) => ({
+      ...current,
+      [resourceId]: createBasicInfoDraftFromResource(resource),
+    }))
+  }, [])
+
   const value = useMemo(
     () => ({
       getBasicInfoDraft,
       initializeBasicInfoDraft,
       updateBasicInfoField,
       clearBasicInfoDraft,
+      syncBasicInfoDraft,
     }),
     [
       clearBasicInfoDraft,
       getBasicInfoDraft,
       initializeBasicInfoDraft,
+      syncBasicInfoDraft,
       updateBasicInfoField,
     ],
   )

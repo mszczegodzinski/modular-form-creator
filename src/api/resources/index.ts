@@ -4,6 +4,7 @@ export {
   fetchResource,
   fetchResources,
   provisionResource,
+  updateBasicInfo,
 } from './resources.api'
 export { resourcesKeys } from './resources.keys'
 export {
@@ -12,4 +13,5 @@ export {
   useProvisionResourceMutation,
   useResourceQuery,
   useResourcesQuery,
+  useUpdateBasicInfoMutation,
 } from './resources.queries'

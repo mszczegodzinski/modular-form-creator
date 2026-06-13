@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
+  BasicInfo,
   CreateResourcePayload,
   ListResourcesParams,
 } from '../types/resource'
@@ -9,6 +10,7 @@ import {
   fetchResource,
   fetchResources,
   provisionResource,
+  updateBasicInfo,
 } from './resources.api'
 import { resourcesKeys } from './resources.keys'
 
@@ -55,6 +57,19 @@ export function useProvisionResourceMutation() {
   return useMutation({
     mutationFn: (id: string) => provisionResource(id),
     onSuccess: (resource, id) => {
+      queryClient.setQueryData(resourcesKeys.detail(id), resource)
+      queryClient.invalidateQueries({ queryKey: resourcesKeys.lists() })
+    },
+  })
+}
+
+export function useUpdateBasicInfoMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: BasicInfo }) =>
+      updateBasicInfo(id, payload),
+    onSuccess: (resource, { id }) => {
       queryClient.setQueryData(resourcesKeys.detail(id), resource)
       queryClient.invalidateQueries({ queryKey: resourcesKeys.lists() })
     },

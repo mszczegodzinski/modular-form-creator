@@ -1,8 +1,14 @@
-import { useEffect, useState, type ChangeEvent } from 'react'
+import { useEffect, useState, type ChangeEvent, type FormEventHandler } from 'react'
 import { useParams } from 'react-router-dom'
-import { useResourceQuery, type BasicInfo } from '../../api'
+import { useResourceQuery, useUpdateBasicInfoMutation, type BasicInfo } from '../../api'
 import { Button, Card, Input, Select } from '../../design-system'
 import { paths } from '../../routes/paths'
+import {
+  hasBasicInfoFieldErrors,
+  toBasicInfoPayload,
+  validateBasicInfo,
+  type BasicInfoFieldErrors,
+} from './basicInfoValidation'
 import {
   BackLink,
   CardIntro,
@@ -56,13 +62,16 @@ function BasicInfoSaveStatus({ draft }: { draft: BasicInfo }) {
 export function BasicInfoPage() {
   const { resourceId } = useParams<{ resourceId: string }>()
   const resourceQuery = useResourceQuery(resourceId)
+  const updateBasicInfoMutation = useUpdateBasicInfoMutation()
   const {
     clearBasicInfoDraft,
     getBasicInfoDraft,
     initializeBasicInfoDraft,
+    syncBasicInfoDraft,
     updateBasicInfoField,
   } = useResourceWorkspace()
   const draft = resourceId ? getBasicInfoDraft(resourceId) : undefined
+  const [fieldErrors, setFieldErrors] = useState<BasicInfoFieldErrors>({})
 
   useEffect(() => {
     if (!resourceId || !resourceQuery.data) {
@@ -71,6 +80,34 @@ export function BasicInfoPage() {
 
     initializeBasicInfoDraft(resourceId, resourceQuery.data)
   }, [initializeBasicInfoDraft, resourceId, resourceQuery.data])
+
+  const handleSave: FormEventHandler<HTMLFormElement> = (event) => {
+    event.preventDefault()
+
+    if (!resourceId || !draft || resourceQuery.data?.status === 'completed') {
+      return
+    }
+
+    const validationErrors = validateBasicInfo(draft)
+    setFieldErrors(validationErrors)
+
+    if (hasBasicInfoFieldErrors(validationErrors)) {
+      return
+    }
+
+    updateBasicInfoMutation.mutate(
+      {
+        id: resourceId,
+        payload: toBasicInfoPayload(draft),
+      },
+      {
+        onSuccess: (resource) => {
+          syncBasicInfoDraft(resourceId, resource)
+          setFieldErrors({})
+        },
+      },
+    )
+  }
 
   const handleClear = () => {
     if (!resourceId || !resourceQuery.data) {
@@ -85,7 +122,13 @@ export function BasicInfoPage() {
     }
 
     clearBasicInfoDraft(resourceId, getResourceName(resourceQuery.data))
+    setFieldErrors({})
   }
+
+  const saveError =
+    updateBasicInfoMutation.error instanceof Error
+      ? updateBasicInfoMutation.error.message
+      : undefined
 
   if (!resourceId) {
     return (
@@ -140,41 +183,47 @@ export function BasicInfoPage() {
         <CardIntro>
           <BasicInfoSaveStatus key={resourceId} draft={draft} />
           <DraftHint>
-            Your entries are kept while you work on this resource. To save them
-            permanently, complete both Basic Info and Project Details, then choose
-            Complete resource on the overview page.
+            {isCompleted
+              ? 'Submit your changes explicitly to save them permanently.'
+              : 'Use Save module to store Basic Info on the server. To finish the resource, complete both modules and choose Complete resource on the overview page.'}
           </DraftHint>
         </CardIntro>
 
-        <Form
-          onSubmit={(event) => {
-            event.preventDefault()
-          }}
-        >
+        <Form onSubmit={handleSave}>
+          {saveError && <ErrorText>{saveError}</ErrorText>}
           <Input
             label="Resource name"
             value={draft.resourceName}
             state="locked"
             tooltip="Resource name is immutable after creation."
             helperText="This value cannot be changed."
+            error={fieldErrors.resourceName}
             readOnly
           />
           <Input
             label="Owner"
             placeholder="Jane Doe"
             value={draft.owner}
-            onChange={(event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) =>
+            error={fieldErrors.owner}
+            onChange={(event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
               updateBasicInfoField(resourceId, 'owner', event.target.value)
-            }
+              if (fieldErrors.owner) {
+                setFieldErrors((current) => ({ ...current, owner: undefined }))
+              }
+            }}
           />
           <Input
             label="Email"
             type="email"
             placeholder="jane.doe@example.com"
             value={draft.email}
-            onChange={(event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) =>
+            error={fieldErrors.email}
+            onChange={(event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
               updateBasicInfoField(resourceId, 'email', event.target.value)
-            }
+              if (fieldErrors.email) {
+                setFieldErrors((current) => ({ ...current, email: undefined }))
+              }
+            }}
           />
           <Input
             label="Description"
@@ -182,29 +231,41 @@ export function BasicInfoPage() {
             value={draft.description}
             multiline
             rows={4}
-            onChange={(event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) =>
+            error={fieldErrors.description}
+            onChange={(event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
               updateBasicInfoField(resourceId, 'description', event.target.value)
-            }
+              if (fieldErrors.description) {
+                setFieldErrors((current) => ({ ...current, description: undefined }))
+              }
+            }}
           />
           <Select
             label="Priority"
             value={draft.priority}
             options={[...PRIORITY_OPTIONS]}
-            onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+            error={fieldErrors.priority}
+            onChange={(event: ChangeEvent<HTMLSelectElement>) => {
               updateBasicInfoField(resourceId, 'priority', event.target.value)
-            }
+              if (fieldErrors.priority) {
+                setFieldErrors((current) => ({ ...current, priority: undefined }))
+              }
+            }}
           />
 
           <FormActions>
-            {isCompleted && (
-              <DraftHint>
-                Submit your changes explicitly to save them permanently.
-              </DraftHint>
-            )}
             <FormActionsEnd>
               <Button type="button" variant="ghost" size="small" onClick={handleClear}>
                 Clear form
               </Button>
+              {!isCompleted && (
+                <Button
+                  type="submit"
+                  size="small"
+                  disabled={updateBasicInfoMutation.isPending}
+                >
+                  {updateBasicInfoMutation.isPending ? 'Saving module…' : 'Save module'}
+                </Button>
+              )}
             </FormActionsEnd>
           </FormActions>
         </Form>
