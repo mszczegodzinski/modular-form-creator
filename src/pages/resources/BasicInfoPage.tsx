@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent, type SubmitEventHandler } from '
 import { useParams } from 'react-router-dom'
 import { useResourceQuery, useUpdateBasicInfoMutation } from '../../api'
 import { Button, Card, Input, Select } from '../../design-system'
+import { useAppSnackbar } from '../../hooks/useAppSnackbar'
 import { paths } from '../../routes/paths'
 import {
   hasBasicInfoFieldErrors,
@@ -32,6 +33,7 @@ export function BasicInfoPage() {
   const { resourceId } = useParams<{ resourceId: string }>()
   const resourceQuery = useResourceQuery(resourceId)
   const updateBasicInfoMutation = useUpdateBasicInfoMutation()
+  const { showError, showSuccess } = useAppSnackbar()
   const {
     clearBasicInfoDraft,
     getBasicInfoDraft,
@@ -77,6 +79,10 @@ export function BasicInfoPage() {
         onSuccess: (resource) => {
           syncBasicInfoDraft(resourceId, resource)
           setFieldErrors({})
+          showSuccess('Basic Info saved successfully.')
+        },
+        onError: (error) => {
+          showError(error, 'Failed to save Basic Info.')
         },
       },
     )
@@ -97,11 +103,6 @@ export function BasicInfoPage() {
     clearBasicInfoDraft(resourceId, getResourceName(resourceQuery.data))
     setFieldErrors({})
   }
-
-  const saveError =
-    updateBasicInfoMutation.error instanceof Error
-      ? updateBasicInfoMutation.error.message
-      : undefined
 
   if (!resourceId) {
     return (
@@ -169,7 +170,6 @@ export function BasicInfoPage() {
         </CardIntro>
 
         <Form onSubmit={handleSave}>
-          {saveError && <ErrorText>{saveError}</ErrorText>}
           <Input
             label="Resource name"
             value={draft.resourceName}

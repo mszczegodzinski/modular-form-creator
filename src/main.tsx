@@ -4,14 +4,17 @@ import { ThemeProvider } from 'styled-components'
 import App from './App'
 import { GlobalStyles } from './design-system/theme/GlobalStyles'
 import { theme } from './design-system/theme/theme'
+import { AppSnackbarProvider } from './providers/AppSnackbarProvider'
 import { QueryProvider } from './providers/QueryProvider'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryProvider>
       <ThemeProvider theme={theme}>
-        <GlobalStyles />
-        <App />
+        <AppSnackbarProvider>
+          <GlobalStyles />
+          <App />
+        </AppSnackbarProvider>
       </ThemeProvider>
     </QueryProvider>
   </StrictMode>,

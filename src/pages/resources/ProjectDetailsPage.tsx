@@ -5,6 +5,7 @@ import {
   useUpdateProjectDetailsMutation,
 } from '../../api'
 import { Button, Card, CheckboxGroup, Input, Select } from '../../design-system'
+import { useAppSnackbar } from '../../hooks/useAppSnackbar'
 import { paths } from '../../routes/paths'
 import {
   hasProjectDetailsFieldErrors,
@@ -39,6 +40,7 @@ export function ProjectDetailsPage() {
   const { resourceId } = useParams<{ resourceId: string }>()
   const resourceQuery = useResourceQuery(resourceId)
   const updateProjectDetailsMutation = useUpdateProjectDetailsMutation()
+  const { showError, showSuccess } = useAppSnackbar()
   const {
     clearProjectDetailsDraft,
     getProjectDetailsDraft,
@@ -85,6 +87,10 @@ export function ProjectDetailsPage() {
         onSuccess: (resource) => {
           syncProjectDetailsDraft(resourceId, resource)
           setFieldErrors({})
+          showSuccess('Project Details saved successfully.')
+        },
+        onError: (error) => {
+          showError(error, 'Failed to save Project Details.')
         },
       },
     )
@@ -103,11 +109,6 @@ export function ProjectDetailsPage() {
     clearProjectDetailsDraft(resourceId)
     setFieldErrors({})
   }
-
-  const saveError =
-    updateProjectDetailsMutation.error instanceof Error
-      ? updateProjectDetailsMutation.error.message
-      : undefined
 
   if (!resourceId) {
     return (
@@ -201,7 +202,6 @@ export function ProjectDetailsPage() {
         </CardIntro>
 
         <Form onSubmit={handleSave}>
-          {saveError && <ErrorText>{saveError}</ErrorText>}
           <Input
             label="Project name"
             placeholder="Customer onboarding"
