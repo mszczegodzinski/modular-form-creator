@@ -4,6 +4,7 @@ import type {
   CreateResourcePayload,
   ListResourcesParams,
   ProjectDetails,
+  ReplaceResourcePayload,
 } from '../types/resource'
 import {
   createResource,
@@ -11,6 +12,7 @@ import {
   fetchResource,
   fetchResources,
   provisionResource,
+  replaceResource,
   updateBasicInfo,
   updateProjectDetails,
 } from './resources.api'
@@ -85,6 +87,19 @@ export function useUpdateProjectDetailsMutation() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: ProjectDetails }) =>
       updateProjectDetails(id, payload),
+    onSuccess: (resource, { id }) => {
+      queryClient.setQueryData(resourcesKeys.detail(id), resource)
+      queryClient.invalidateQueries({ queryKey: resourcesKeys.lists() })
+    },
+  })
+}
+
+export function useReplaceResourceMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ReplaceResourcePayload }) =>
+      replaceResource(id, payload),
     onSuccess: (resource, { id }) => {
       queryClient.setQueryData(resourcesKeys.detail(id), resource)
       queryClient.invalidateQueries({ queryKey: resourcesKeys.lists() })

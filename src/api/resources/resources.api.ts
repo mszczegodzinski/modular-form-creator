@@ -5,6 +5,7 @@ import type {
   ListResourcesParams,
   ListResourcesResponse,
   ProjectDetails,
+  ReplaceResourcePayload,
   Resource,
 } from '../types/resource'
 
@@ -67,6 +68,12 @@ export async function updateProjectDetails(id: string, payload: ProjectDetails) 
     `/api/resources/${id}/project-details`,
     payload,
   )
+
+  return data
+}
+
+export async function replaceResource(id: string, payload: ReplaceResourcePayload) {
+  const { data } = await apiClient.put<Resource>(`/api/resources/${id}`, payload)
 
   return data
 }

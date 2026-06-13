@@ -139,3 +139,9 @@ export const ProvisionButton = styled(Button)`
     min-width: 10rem;
   }
 `
+
+export const SubmitChangesButton = styled(Button)`
+  && {
+    min-width: 10rem;
+  }
+`

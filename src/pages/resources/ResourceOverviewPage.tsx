@@ -1,7 +1,12 @@
 import { Link, useParams } from 'react-router-dom'
-import { useProvisionResourceMutation, useResourceQuery } from '../../api'
+import { useProvisionResourceMutation, useReplaceResourceMutation, useResourceQuery } from '../../api'
 import { Badge, Button, Card } from '../../design-system'
 import { paths } from '../../routes/paths'
+import {
+  buildReplaceResourcePayload,
+  hasBufferedResourceEdits,
+  validateReplaceResourcePayload,
+} from './completedResourceSubmit'
 import {
   canAccessProjectDetails,
   canProvisionResource,
@@ -26,14 +31,23 @@ import {
   ProvisionButton,
   SectionTitle,
   StatusText,
+  SubmitChangesButton,
   Title,
   TitleRow,
 } from './ResourceOverviewPage.styles'
+import { useResourceWorkspace } from './useResourceWorkspace'
 
 export function ResourceOverviewPage() {
   const { resourceId } = useParams<{ resourceId: string }>()
   const resourceQuery = useResourceQuery(resourceId)
   const provisionMutation = useProvisionResourceMutation()
+  const replaceMutation = useReplaceResourceMutation()
+  const {
+    getBasicInfoDraft,
+    getProjectDetailsDraft,
+    syncBasicInfoDraft,
+    syncProjectDetailsDraft,
+  } = useResourceWorkspace()
 
   const handleProvision = () => {
     if (!resourceId || !resourceQuery.data) {
@@ -50,8 +64,46 @@ export function ResourceOverviewPage() {
     provisionMutation.mutate(resourceId)
   }
 
+  const handleSubmitChanges = () => {
+    if (!resourceId || !resourceQuery.data) {
+      return
+    }
+
+    const resource = resourceQuery.data
+    const payload = buildReplaceResourcePayload(
+      resource,
+      getBasicInfoDraft(resourceId),
+      getProjectDetailsDraft(resourceId),
+    )
+    const validationError = validateReplaceResourcePayload(payload)
+
+    if (validationError) {
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Submit all changes to "${resource.name}"? This will replace the saved resource data.`,
+    )
+    if (!confirmed) {
+      return
+    }
+
+    replaceMutation.mutate(
+      { id: resourceId, payload },
+      {
+        onSuccess: (updatedResource) => {
+          syncBasicInfoDraft(resourceId, updatedResource)
+          syncProjectDetailsDraft(resourceId, updatedResource)
+        },
+      },
+    )
+  }
+
   const provisionError =
     provisionMutation.error instanceof Error ? provisionMutation.error.message : undefined
+
+  const replaceError =
+    replaceMutation.error instanceof Error ? replaceMutation.error.message : undefined
 
   if (!resourceId) {
     return (
@@ -91,6 +143,21 @@ export function ResourceOverviewPage() {
   const projectDetailsComplete = isProjectDetailsComplete(resource.projectDetails)
   const projectDetailsAccessible = canAccessProjectDetails(resource)
   const provisioningAllowed = canProvisionResource(resource)
+  const basicInfoDraft = getBasicInfoDraft(resourceId)
+  const projectDetailsDraft = getProjectDetailsDraft(resourceId)
+  const hasBufferedEdits = hasBufferedResourceEdits(
+    resource,
+    basicInfoDraft,
+    projectDetailsDraft,
+  )
+  const replacePayload = buildReplaceResourcePayload(
+    resource,
+    basicInfoDraft,
+    projectDetailsDraft,
+  )
+  const replaceValidationError = validateReplaceResourcePayload(replacePayload)
+  const submitChangesAllowed =
+    resource.status === 'completed' && hasBufferedEdits && !replaceValidationError
 
   return (
     <Page>
@@ -169,10 +236,27 @@ export function ResourceOverviewPage() {
           </NavLink>
 
           {resource.status === 'completed' ? (
-            <ActionHint>
-              This resource is completed. Module edits require explicit submit on the
-              module forms.
-            </ActionHint>
+            <>
+              <ActionHint>
+                This resource is completed. Partial saves are disabled — edit modules,
+                then submit all changes here.
+              </ActionHint>
+              {replaceError && <ErrorText>{replaceError}</ErrorText>}
+              {replaceValidationError && hasBufferedEdits && (
+                <ErrorText>{replaceValidationError}</ErrorText>
+              )}
+              <SubmitChangesButton
+                type="button"
+                size="small"
+                disabled={!submitChangesAllowed || replaceMutation.isPending}
+                onClick={handleSubmitChanges}
+              >
+                {replaceMutation.isPending ? 'Submitting…' : 'Submit changes'}
+              </SubmitChangesButton>
+              {!hasBufferedEdits && (
+                <ActionHint>No pending edits in module forms.</ActionHint>
+              )}
+            </>
           ) : (
             <>
               {provisionError && <ErrorText>{provisionError}</ErrorText>}

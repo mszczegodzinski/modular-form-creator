@@ -47,3 +47,9 @@ export interface ListResourcesResponse {
 export interface CreateResourcePayload {
   resourceName: string
 }
+
+export interface ReplaceResourcePayload {
+  name: string
+  basicInfo: BasicInfo
+  projectDetails: ProjectDetails
+}
