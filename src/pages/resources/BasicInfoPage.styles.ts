@@ -23,6 +23,16 @@ export const BackLink = styled(Link)`
   }
 `
 
+export const LockedLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
+  font-weight: 600;
+  width: fit-content;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`
+
 export const Title = styled.h1`
   font-size: 2rem;
 `

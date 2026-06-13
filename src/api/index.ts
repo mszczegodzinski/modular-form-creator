@@ -19,10 +19,12 @@ export {
   provisionResource,
   resourcesKeys,
   updateBasicInfo,
+  updateProjectDetails,
   useCreateResourceMutation,
   useDeleteResourceMutation,
   useProvisionResourceMutation,
   useResourceQuery,
   useResourcesQuery,
   useUpdateBasicInfoMutation,
+  useUpdateProjectDetailsMutation,
 } from './resources'

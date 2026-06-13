@@ -3,6 +3,7 @@ import type {
   BasicInfo,
   CreateResourcePayload,
   ListResourcesParams,
+  ProjectDetails,
 } from '../types/resource'
 import {
   createResource,
@@ -11,6 +12,7 @@ import {
   fetchResources,
   provisionResource,
   updateBasicInfo,
+  updateProjectDetails,
 } from './resources.api'
 import { resourcesKeys } from './resources.keys'
 
@@ -69,6 +71,19 @@ export function useUpdateBasicInfoMutation() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: BasicInfo }) =>
       updateBasicInfo(id, payload),
+    onSuccess: (resource, { id }) => {
+      queryClient.setQueryData(resourcesKeys.detail(id), resource)
+      queryClient.invalidateQueries({ queryKey: resourcesKeys.lists() })
+    },
+  })
+}
+
+export function useUpdateProjectDetailsMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ProjectDetails }) =>
+      updateProjectDetails(id, payload),
     onSuccess: (resource, { id }) => {
       queryClient.setQueryData(resourcesKeys.detail(id), resource)
       queryClient.invalidateQueries({ queryKey: resourcesKeys.lists() })

@@ -5,6 +5,7 @@ export {
   fetchResources,
   provisionResource,
   updateBasicInfo,
+  updateProjectDetails,
 } from './resources.api'
 export { resourcesKeys } from './resources.keys'
 export {
@@ -14,4 +15,5 @@ export {
   useResourceQuery,
   useResourcesQuery,
   useUpdateBasicInfoMutation,
+  useUpdateProjectDetailsMutation,
 } from './resources.queries'

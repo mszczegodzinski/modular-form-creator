@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type FormEventHandler } from 'react'
+import { useEffect, useState, type ChangeEvent, type SubmitEventHandler } from 'react'
 import { useParams } from 'react-router-dom'
 import { useResourceQuery, useUpdateBasicInfoMutation, type BasicInfo } from '../../api'
 import { Button, Card, Input, Select } from '../../design-system'
@@ -81,7 +81,7 @@ export function BasicInfoPage() {
     initializeBasicInfoDraft(resourceId, resourceQuery.data)
   }, [initializeBasicInfoDraft, resourceId, resourceQuery.data])
 
-  const handleSave: FormEventHandler<HTMLFormElement> = (event) => {
+  const handleSave: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault()
 
     if (!resourceId || !draft || resourceQuery.data?.status === 'completed') {

@@ -4,6 +4,7 @@ import type {
   CreateResourcePayload,
   ListResourcesParams,
   ListResourcesResponse,
+  ProjectDetails,
   Resource,
 } from '../types/resource'
 
@@ -55,6 +56,15 @@ export async function provisionResource(id: string) {
 export async function updateBasicInfo(id: string, payload: BasicInfo) {
   const { data } = await apiClient.patch<Resource>(
     `/api/resources/${id}/basic-info`,
+    payload,
+  )
+
+  return data
+}
+
+export async function updateProjectDetails(id: string, payload: ProjectDetails) {
+  const { data } = await apiClient.patch<Resource>(
+    `/api/resources/${id}/project-details`,
     payload,
   )
 

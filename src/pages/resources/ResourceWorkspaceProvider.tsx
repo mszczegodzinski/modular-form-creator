@@ -1,14 +1,19 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
-import type { BasicInfo, Resource } from '../../api'
+import type { BasicInfo, ProjectDetails, Resource } from '../../api'
 import { ResourceWorkspaceContext } from './resourceWorkspaceContext'
 import {
   createBasicInfoDraftFromResource,
   createEmptyBasicInfoDraft,
+  createEmptyProjectDetailsDraft,
+  createProjectDetailsDraftFromResource,
 } from './resourceWorkspace.utils'
 
 export function ResourceWorkspaceProvider({ children }: { children: ReactNode }) {
   const [basicInfoDrafts, setBasicInfoDrafts] = useState<
     Record<string, BasicInfo>
+  >({})
+  const [projectDetailsDrafts, setProjectDetailsDrafts] = useState<
+    Record<string, ProjectDetails>
   >({})
 
   const getBasicInfoDraft = useCallback(
@@ -69,6 +74,88 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
     }))
   }, [])
 
+  const getProjectDetailsDraft = useCallback(
+    (resourceId: string) => projectDetailsDrafts[resourceId],
+    [projectDetailsDrafts],
+  )
+
+  const initializeProjectDetailsDraft = useCallback(
+    (resourceId: string, resource: Resource) => {
+      setProjectDetailsDrafts((current) => {
+        if (current[resourceId]) {
+          return current
+        }
+
+        return {
+          ...current,
+          [resourceId]: createProjectDetailsDraftFromResource(resource),
+        }
+      })
+    },
+    [],
+  )
+
+  const updateProjectDetailsField = useCallback(
+    (
+      resourceId: string,
+      field: 'projectName' | 'budget' | 'category',
+      value: string,
+    ) => {
+      setProjectDetailsDrafts((current) => {
+        const draft = current[resourceId]
+        if (!draft) {
+          return current
+        }
+
+        return {
+          ...current,
+          [resourceId]: {
+            ...draft,
+            [field]: value,
+          },
+        }
+      })
+    },
+    [],
+  )
+
+  const updateProjectDetailsOptions = useCallback(
+    (resourceId: string, options: string[]) => {
+      setProjectDetailsDrafts((current) => {
+        const draft = current[resourceId]
+        if (!draft) {
+          return current
+        }
+
+        return {
+          ...current,
+          [resourceId]: {
+            ...draft,
+            options,
+          },
+        }
+      })
+    },
+    [],
+  )
+
+  const clearProjectDetailsDraft = useCallback((resourceId: string) => {
+    setProjectDetailsDrafts((current) => ({
+      ...current,
+      [resourceId]: createEmptyProjectDetailsDraft(),
+    }))
+  }, [])
+
+  const syncProjectDetailsDraft = useCallback(
+    (resourceId: string, resource: Resource) => {
+      setProjectDetailsDrafts((current) => ({
+        ...current,
+        [resourceId]: createProjectDetailsDraftFromResource(resource),
+      }))
+    },
+    [],
+  )
+
   const value = useMemo(
     () => ({
       getBasicInfoDraft,
@@ -76,13 +163,25 @@ export function ResourceWorkspaceProvider({ children }: { children: ReactNode })
       updateBasicInfoField,
       clearBasicInfoDraft,
       syncBasicInfoDraft,
+      getProjectDetailsDraft,
+      initializeProjectDetailsDraft,
+      updateProjectDetailsField,
+      updateProjectDetailsOptions,
+      clearProjectDetailsDraft,
+      syncProjectDetailsDraft,
     }),
     [
       clearBasicInfoDraft,
+      clearProjectDetailsDraft,
       getBasicInfoDraft,
+      getProjectDetailsDraft,
       initializeBasicInfoDraft,
+      initializeProjectDetailsDraft,
       syncBasicInfoDraft,
+      syncProjectDetailsDraft,
       updateBasicInfoField,
+      updateProjectDetailsField,
+      updateProjectDetailsOptions,
     ],
   )
 
