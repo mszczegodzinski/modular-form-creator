@@ -1,0 +1,8 @@
+export { ResourcesListPage } from './ResourcesListPage'
+export { ResourceOverviewPage } from './ResourceOverviewPage'
+export { ResourceDetailsPage } from './ResourceDetailsPage'
+export { BasicInfoPage } from './BasicInfoPage'
+export { ProjectDetailsPage } from './ProjectDetailsPage'
+export { ResourceWorkspaceLayout } from './ResourceWorkspaceLayout'
+export { ResourceWorkspaceProvider } from './ResourceWorkspaceProvider'
+export { useResourceWorkspace } from './useResourceWorkspace'
