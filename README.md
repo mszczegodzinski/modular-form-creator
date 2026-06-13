@@ -8,27 +8,50 @@ The UI is built with **React**, **TypeScript**, **Vite**, **TanStack Query**, **
 
 - **Node.js** 20+ (recommended)
 - **npm**
-- **Docker** and **Docker Compose** (for the backend and MongoDB)
+- **Docker** and **Docker Compose** (for the full stack or backend only)
 
 ## Quick start
 
-### 1. Start the backend
+### Full stack with Docker (recommended)
 
 From the project root:
 
 ```bash
-docker compose up -d
+docker compose up --build
 ```
 
 This starts:
 
+- Frontend at `http://localhost:5173` (Vite dev server in a container)
 - API at `http://localhost:5001`
 - Swagger UI at `http://localhost:5001/docs`
 - MongoDB on port `27017`
 
+The frontend uses `VITE_API_URL=http://localhost:5001` so API calls from your browser reach the exposed backend port on the host. Backend CORS is configured for `http://localhost:5173`.
+
+Run in the background:
+
+```bash
+docker compose up --build -d
+```
+
+Stop the stack:
+
+```bash
+docker compose down
+```
+
 See [backend/README.md](./backend/README.md) for full API documentation.
 
-### 2. Start the frontend
+### Local frontend development
+
+#### 1. Start the backend
+
+```bash
+docker compose up -d mongo backend
+```
+
+#### 2. Start the frontend on the host
 
 ```bash
 npm install
@@ -37,9 +60,15 @@ npm run dev
 
 The app runs at `http://localhost:5173` by default.
 
-### 3. Optional environment file
+### Optional environment file
 
-The frontend reads `VITE_API_BASE_URL` (defaults to `http://localhost:5001`). See [src/api/config.ts](./src/api/config.ts).
+Copy `.env.example` to `.env` when running the frontend locally outside Docker:
+
+```bash
+cp .env.example .env
+```
+
+The frontend reads `VITE_API_URL` (defaults to `http://localhost:5001`). See [src/api/config.ts](./src/api/config.ts).
 
 ## Available scripts
 
