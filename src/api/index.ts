@@ -13,8 +13,10 @@ export type {
 } from './types/resource'
 export {
   createResource,
+  deleteResource,
   fetchResources,
   resourcesKeys,
   useCreateResourceMutation,
+  useDeleteResourceMutation,
   useResourcesQuery,
 } from './resources'

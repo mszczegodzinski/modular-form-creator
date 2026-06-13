@@ -28,3 +28,11 @@ export async function createResource(payload: CreateResourcePayload) {
 
   return data
 }
+
+export async function deleteResource(resourceId: number) {
+  const { data } = await apiClient.delete<Resource>(
+    `/api/resources/${resourceId}`,
+  )
+
+  return data
+}
