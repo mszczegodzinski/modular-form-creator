@@ -4,7 +4,7 @@ import {
   useDeleteResourceMutation,
   useResourcesQuery,
 } from '../../api'
-import { Badge, Button, Card, Input } from '../../design-system'
+import { Badge, Button, Card, Input, Select } from '../../design-system'
 import { useAppSnackbar } from '../../hooks/useAppSnackbar'
 import { useConfirmDialog } from '../../hooks/useConfirmDialog'
 import { paths } from '../../routes/paths'
@@ -18,17 +18,29 @@ import {
   ResourceActions,
   ResourceInfo,
   ResourceLink,
+  PageSizeControl,
+  PaginationBar,
+  PaginationControls,
+  PaginationInfo,
   ResourceList,
-  ResourceMeta,
   ResourceRow,
   SectionTitle,
   StatusText,
   Title,
 } from './ResourcesListPage.styles'
 
+const PAGE_SIZE_OPTIONS = [
+  { value: '10', label: '10 per page' },
+  { value: '25', label: '25 per page' },
+  { value: '50', label: '50 per page' },
+  { value: '100', label: '100 per page' },
+] as const
+
 export function ResourcesListPage() {
   const [resourceName, setResourceName] = useState('')
-  const resourcesQuery = useResourcesQuery()
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const resourcesQuery = useResourcesQuery({ page, pageSize })
   const createResourceMutation = useCreateResourceMutation()
   const deleteResourceMutation = useDeleteResourceMutation()
   const { showError } = useAppSnackbar()
@@ -41,6 +53,17 @@ export function ResourcesListPage() {
 
     showError(resourcesQuery.error, 'Failed to load resources.')
   }, [resourcesQuery.error, resourcesQuery.isError, showError])
+
+  useEffect(() => {
+    if (!resourcesQuery.isSuccess) {
+      return
+    }
+
+    const { totalPages } = resourcesQuery.data.pagination
+    if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, resourcesQuery.data, resourcesQuery.isSuccess])
 
   const handleCreate: SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault()
@@ -81,6 +104,16 @@ export function ResourcesListPage() {
       ? deleteResourceMutation.error.message
       : undefined
 
+  const pagination = resourcesQuery.isSuccess ? resourcesQuery.data.pagination : null
+  const paginationSummary = pagination
+    ? (() => {
+        const rangeStart = (pagination.page - 1) * pagination.pageSize + 1
+        const rangeEnd = Math.min(pagination.page * pagination.pageSize, pagination.totalItems)
+
+        return `Showing ${rangeStart}–${rangeEnd} of ${pagination.totalItems} · Page ${pagination.page} of ${pagination.totalPages}`
+      })()
+    : null
+
   return (
     <Page>
       <Header>
@@ -120,46 +153,86 @@ export function ResourcesListPage() {
           <StatusText>Unable to display resources.</StatusText>
         )}
 
-        {resourcesQuery.isSuccess && resourcesQuery.data.items.length === 0 && (
+        {resourcesQuery.isSuccess && resourcesQuery.data.pagination.totalItems === 0 && (
           <StatusText>No resources yet. Create your first one above.</StatusText>
         )}
 
-        {resourcesQuery.isSuccess && resourcesQuery.data.items.length > 0 && (
-          <ResourceList>
-            {resourcesQuery.data.items.map((resource) => {
-              const isDeleting =
-                deleteResourceMutation.isPending &&
-                deleteResourceMutation.variables === resource.resourceId
+        {resourcesQuery.isSuccess && resourcesQuery.data.pagination.totalItems > 0 && (
+          <>
+            <ResourceList>
+              {resourcesQuery.data.items.map((resource) => {
+                const isDeleting =
+                  deleteResourceMutation.isPending &&
+                  deleteResourceMutation.variables === resource.resourceId
 
-              return (
-                <ResourceRow key={resource._id}>
-                  <ResourceInfo>
-                    <ResourceLink to={paths.resourceOverview(resource.resourceId)}>
-                      {resource.name}
-                    </ResourceLink>
-                    <ResourceMeta>ID {resource.resourceId}</ResourceMeta>
-                  </ResourceInfo>
-                  <ResourceActions>
-                    <Badge
-                      variant={resource.status === 'completed' ? 'success' : 'neutral'}
-                    >
-                      {resource.status}
-                    </Badge>
-                    <DeleteButton
-                      type="button"
-                      variant="ghost"
-                      size="small"
-                      disabled={deleteResourceMutation.isPending}
-                      onClick={() => handleDelete(resource.resourceId, resource.name)}
-                      state={isDeleting ? 'disabled' : 'normal'}
-                    >
-                      {isDeleting ? 'Deleting…' : 'Delete'}
-                    </DeleteButton>
-                  </ResourceActions>
-                </ResourceRow>
-              )
-            })}
-          </ResourceList>
+                return (
+                  <ResourceRow key={resource._id}>
+                    <ResourceInfo>
+                      <ResourceLink to={paths.resourceOverview(resource.resourceId)}>
+                        {resource.name}
+                      </ResourceLink>
+                    </ResourceInfo>
+                    <ResourceActions>
+                      <Badge
+                        variant={resource.status === 'completed' ? 'success' : 'neutral'}
+                      >
+                        {resource.status}
+                      </Badge>
+                      <DeleteButton
+                        type="button"
+                        variant="ghost"
+                        size="small"
+                        disabled={deleteResourceMutation.isPending}
+                        onClick={() => handleDelete(resource.resourceId, resource.name)}
+                        state={isDeleting ? 'disabled' : 'normal'}
+                      >
+                        {isDeleting ? 'Deleting…' : 'Delete'}
+                      </DeleteButton>
+                    </ResourceActions>
+                  </ResourceRow>
+                )
+              })}
+            </ResourceList>
+
+            <PaginationBar>
+              <PageSizeControl>
+                <Select
+                  label="Items per page"
+                  value={String(pageSize)}
+                  options={[...PAGE_SIZE_OPTIONS]}
+                  onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                    setPageSize(Number(event.target.value))
+                    setPage(1)
+                  }}
+                />
+              </PageSizeControl>
+
+              <PaginationInfo>{paginationSummary}</PaginationInfo>
+
+              <PaginationControls>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="small"
+                  disabled={page <= 1 || resourcesQuery.isFetching}
+                  onClick={() => setPage((current) => current - 1)}
+                >
+                  Previous
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="small"
+                  disabled={
+                    (pagination?.totalPages ?? 1) <= page || resourcesQuery.isFetching
+                  }
+                  onClick={() => setPage((current) => current + 1)}
+                >
+                  Next
+                </Button>
+              </PaginationControls>
+            </PaginationBar>
+          </>
         )}
       </Card>
     </Page>
