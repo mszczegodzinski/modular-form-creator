@@ -79,14 +79,35 @@ export const ResourceLink = styled(Link)`
   }
 `
 
-export const ResourceMeta = styled.span`
+export const ResourceActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`
+
+export const PaginationBar = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.md};
+  padding-top: ${({ theme }) => theme.spacing.md};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`
+
+export const PageSizeControl = styled.div`
+  min-width: 10rem;
+`
+
+export const PaginationInfo = styled.p`
+  margin: 0;
   font-size: 0.875rem;
   color: ${({ theme }) => theme.colors.inkMuted};
 `
 
-export const ResourceActions = styled.div`
+export const PaginationControls = styled.div`
   display: flex;
-  align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
 `
 
